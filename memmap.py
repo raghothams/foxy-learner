@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import time
+import numpy as np
 
 from sklearn.datasets import load_svmlight_file
 from sklearn.externals.joblib import Memory, Parallel, delayed
 from tempfile import mkdtemp
+from sklearn import svm
 
 
 # function to read train data
@@ -14,10 +17,33 @@ def get_train_data(file_path):
     print "will read now"
     X,y = load_svmlight_file(file_path, multilabel=True)
 
+    return X,y
+
 
 # dummy function to call memory mapped function to read training data
-def child_read_train_data(mem_cached_func, file_path):
-    mem_cached_func(file_path)
+def child_mode(mem_cached_func, train_file_path, test_file_path, i):
+    t0 = time.time()
+    X_train, y_train = mem_cached_func(train_file_path)
+    print "train load Done in ", time.time() - t0
+    print test_file_path+"."+str(i)
+
+"""
+    clf = svm.SVC(kernel='linear')
+    t0 = time.time()
+    clf.fit(X_train, y_train)
+    print time.time()-t0
+
+    t0 = time.time()
+    X_test, y_test = load_svmlight_file(test_file_path+"."+str(i), 
+                        multilabel = True, n_features=X_train.shape[1])
+    print "test load Done in ", time.time() - t0
+
+    t0 = time.time()
+    Z = clf.predict(X_test)
+    np.savetxt('res.txt', Z, delimiter=" ", fmt="%s")
+
+    print "predicted in ", time.time() - t0
+"""
 
 if __name__ == "__main__":
 
@@ -25,8 +51,11 @@ if __name__ == "__main__":
         print "Usage: \nmemmap <file-path>\n"
         exit("No file path specified")
 
-    file_path = sys.argv[1]
-    print "file to be read ",file_path
+    train_file_path = sys.argv[1]
+    print "file to be read ",train_file_path
+    
+    test_file_path = sys.argv[2]
+    print "file to be read ",test_file_path
 
 # get a temp directory to cache the array
     cache_dir = mkdtemp()
@@ -35,8 +64,9 @@ if __name__ == "__main__":
     mem = Memory(cachedir=cache_dir, mmap_mode='r', verbose=5)
     memmed_getter = mem.cache(get_train_data)
 
-    Parallel(n_jobs=3, verbose=3) (delayed(child_read_train_data)\
-            (memmed_getter, file_path) for _ in range(5))
+    Parallel(n_jobs=3, verbose=3) (delayed(child_mode)\
+            (memmed_getter, train_file_path, test_file_path, i) \
+            for i in range(3))
 
     del memmed_getter
     del mem
