@@ -25,7 +25,7 @@ def child_mode(mem_cached_func, train_file_path, test_file_path, i):
     t0 = time.time()
     X_train, y_train = mem_cached_func(train_file_path)
     print "train load Done in ", time.time() - t0
-    print test_file_path+"."+str(i)
+    print test_file_path+"."+str(i+1)
 
 """
     clf = svm.SVC(kernel='linear')
