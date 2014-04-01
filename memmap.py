@@ -1,3 +1,4 @@
+#!/home/lroot/anaconda/bin/python
 # -*- coding: utf-8 -*-
 
 import sys
@@ -25,9 +26,8 @@ def child_mode(mem_cached_func, train_file_path, test_file_path, i):
     t0 = time.time()
     X_train, y_train = mem_cached_func(train_file_path)
     print "train load Done in ", time.time() - t0
-    print test_file_path+"."+str(i+1)
+    print test_file_path+"."+str(i)
 
-"""
     clf = svm.SVC(kernel='linear')
     t0 = time.time()
     clf.fit(X_train, y_train)
@@ -40,15 +40,16 @@ def child_mode(mem_cached_func, train_file_path, test_file_path, i):
 
     t0 = time.time()
     Z = clf.predict(X_test)
-    np.savetxt('res.txt', Z, delimiter=" ", fmt="%s")
-
     print "predicted in ", time.time() - t0
-"""
+
+    np.savetxt('res.txt.'+str(i), Z, delimiter=" ", fmt="%s")
+    print "saved result"
+
 
 if __name__ == "__main__":
 
     if len(sys.argv) == 1:
-        print "Usage: \nmemmap <file-path>\n"
+        print "Usage: \nmemmap <train-file-path> <test-file-path>\n"
         exit("No file path specified")
 
     train_file_path = sys.argv[1]
@@ -66,7 +67,7 @@ if __name__ == "__main__":
 
     Parallel(n_jobs=3, verbose=3) (delayed(child_mode)\
             (memmed_getter, train_file_path, test_file_path, i) \
-            for i in range(3))
+            for i in range(1,4))
 
     del memmed_getter
     del mem
